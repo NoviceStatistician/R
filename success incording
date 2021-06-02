@@ -1,0 +1,95 @@
+library(dplyr)
+
+sp_user<-read.csv("C:/Users/OWNER/Downloads/한국지능정보사회진흥원_2018년 스마트폰과의존실태조사 Raw Data(공개용)_20181231.csv")
+# head(sp_user)
+
+# 1. 모비율에 대한 가설검정
+# 1-1. 귀무가설과 대립가설을 주석(#)으로 적으세요.
+#H0:KK1은 1,2에 속할 확률이 20%이다.
+#H1:KK1은 1,2에 속할 확률이 20%가 아니다.
+
+table(sp_user$KK1)
+
+x= 739+4840
+n = 739+4840+22996
+# 1-2. 유의확률은?
+K<-sp_user %>%  select(KK1)
+head(K)
+table(K)
+
+
+bt<-binom.test(x,n,p=0.2)#x=성공횟수  n=전체횟수
+bt
+
+binom.test(table(K==3), p=.2)#FALSE=5579  TRUE=22996 이 x=성공횟수  n=전체횟수랑 같은 숫자라서 우연적으로 같은 값이 나온 것임.
+
+
+
+# 1-3. 95% 신뢰구간은?
+#0.1906583 0.1998849
+
+# 1-4. 통계적 가설검정 결과는?
+#H0은 기각되고, H1이 성립한다.
+
+
+
+# 2. 일표본 t 검정에 대한 가설검정
+overdependancy<-sp_user %>%
+  select(Q3C_1, Q3C_2, Q3C_3, Q3C_4, Q3C_5, Q3C_6, Q3C_7, Q3C_8, Q3C_9, Q3C_10) %>%
+  mutate(total=Q3C_1+Q3C_2+Q3C_3+Q3C_4+Q3C_5+Q3C_6+Q3C_7+Q3C_8+Q3C_9+Q3C_10)
+
+# 2-1. 생성된 자료 중 결측치의 수는?
+sum(is.na(overdependancy$total))
+
+# 2-2. 평균과 표준편차는?
+over<-overdependancy %>% filter(!is.na(total))
+head(over)
+mean(over$total); sd(over$total)
+
+# 2-3. 귀무가설과 대립가설은?
+#H0:성인의 스마트폰 과의존성(overdependancy)의 평균은 20이다.
+#H1:성인의 스마트폰 과의존성(overdependancy)의 평균은 20이 아니다.
+
+# 2-4. 통계적 가설검정 결과는?
+t.test(over$total, mu=20)
+
+# H0은 기각되고, H1이 성립한다.
+
+
+# 3. 독립 t 검정에 대한 가설검정
+
+# 3-1. 남성과 여성의 표본 수, 평균, 표준편차는?
+sex_ov<-sp_user %>%
+  select(DM2, Q3C_1, Q3C_2, Q3C_3, Q3C_4, Q3C_5, Q3C_6, Q3C_7, Q3C_8, Q3C_9, Q3C_10) %>%
+  mutate(total=Q3C_1+Q3C_2+Q3C_3+Q3C_4+Q3C_5+Q3C_6+Q3C_7+Q3C_8+Q3C_9+Q3C_10) %>%
+  filter(!is.na(total)) %>% group_by(DM2)
+sex_ov<-rename(sex_ov, sex=DM2)
+
+sex_ov$sex<-ifelse(sex_ov$sex==1, "Male", "Female")
+table(sex_ov$sex)
+
+sex_ov1<-sex_ov %>% group_by(sex) %>%
+  summarise(mean_sex=mean(total),sd_sex=sd(total))
+sex_ov1
+
+# 3-2. 귀무가설과 대립가설은?
+
+#H0:성별 차이가 존재하지 않는다.
+#H1:성별 차이가 존재한다.
+
+# 3-3. 등분산 검정결과는?
+# install.packages("car")
+library(car)
+leveneTest(total~factor(sex), data=sex_ov)
+
+# 3-4. 검정통계량값은?
+
+t.test(total~sex, data=sex_ov, var.equal=FALSE)
+
+# 3-5. 통계적 가설검정 결과는?
+#p-value값이 0.0009099이므로 H0이 기각된다.
+#성별의 차이가 존재 한다.
+
+
+
+
