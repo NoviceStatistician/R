@@ -1,0 +1,33 @@
+#과제 1
+a<-rev(c(65.9, 47.8, 36.3, 31.0, 27.5, 26.7, 25.6,
+         24.6, 20.8, 20.5, 19.4, 15.6, 15.1, 15.0, 15.0,
+         13.9, 13.6, 12.5, 11.6, 11.5, 8.6, 6.7, 5.9, 5.0, 4.8,
+         4.1, 3.7, 3.4, 3.3, 3.0, 2.7))
+name<-c("김포시","광주시","파주시", "양평군", "화성시","가평군",
+        "남양주시","평택시","하남시", "용인시","포천시","오산시",
+        "의왕시","양주시", "고양시","수원시","연천군","여주시","이천시",
+        "동두천시","의정부시","광명시","군포시","성남시","안성시","과천시",
+        "안산시","부천시","구리시","시흥시","안양시")
+bar1<-barplot(a,horiz = T, names.arg=name,
+              main = "2010->2015 가구증가율",las=2, xlim=c(0,80),col="skyblue")
+text(a+5,bar1,labels = a,cex=0.7)
+
+
+#과제 2
+m<-c(25,32,34,20,25);w<-c(20,34,30,35,27)
+s<-rbind(m,w)
+name2=c("G1","G2","G3","G4","G5")
+bar2<-barplot(s, names.arg=name2, main = "Scores by group and gender",
+              legend=rownames(s), beside = T, col = c("blue", "orange"), ylim = c(0,40))
+text(bar2, s+1.5, labels = s)
+
+
+
+#과제 3
+water<-read.csv("C:/Users/OWNER/Desktop/out.csv")
+FacilityCapacity<-water$V3/water$V2
+AmountOfWater<-water$V5/water$V2
+W<-rbind(FacilityCapacity,AmountOfWater)
+name3<-water$V1
+bar3<-barplot(W,names.arg=name3, cex.names=0.5, main ="경북 공공하수 처리시설 현황(1개)",
+              legend=rownames(W), beside = T, col = c("blue", "orange"))
