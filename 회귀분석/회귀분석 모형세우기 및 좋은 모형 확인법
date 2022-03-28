@@ -1,0 +1,88 @@
+head(mtcars)
+#차가 무거우면 연비가 좋지 않다. 실제로 그런지 확인(무게와 연비 관계성 확인)
+##1. 산점도 그리기
+plot(mpg~wt, mtcars)
+###차가 가벼우면 가벼울 수록 연비가 좋고, 무거우면 무거울 수록 연비가 나쁜 것을 시각적으로 확인 가능
+
+##2. 상관 정도를 수치적으로 확인(상관계수로 확인)
+cor(mtcars$wt, mtcars$mpg)
+###음의 매우 높은 상관관계가 있다. 
+
+##3.회귀계수를 회귀식으로 추정(선형식 추정)
+model1<-lm(mpg~wt, mtcars)
+model1
+###회귀식: mpg=37.285-5.344*wt
+
+##4. 회귀모형 해석
+summary(model1)
+###Residuals: 오차항/실제 관측값-예측값
+mtcars$mpg-model1$fitted.values
+###summary(model1)의 Residuals값과 같음
+
+##5. 회귀모형 가정 확인
+# 정규성, 독립성, 등분산성
+###정규성(2가지 방법)
+#시각적
+qqnorm(model1$residuals)
+qqline(model1$residuals)
+###점이 선에 가까울수록 정규분포를 따름(눈대중으로 확인 가능)
+
+#수치적
+shapiro.test(model1$residuals)
+###p-value값 > 0.05 이기때문에 H0채택, 정규분포를 따른다.
+
+###독립성(2가지 방법)(독립성과 등분산성은 car패키지 있어야함)
+#시각적
+library(car)
+plot(model1$fitted.values, model1$residuals)
+
+#수치적
+durbinWatsonTest(model1)
+###p-value<0.05이니까 귀무가설 기각. 독립성을 만족하지 않는다.(아마 2차 선형식이 적절할거라 이렇게 나온거 같음)
+###이 식이 좋은 식인지 아닌지 알려주지 않음. 가정해서 찾아야함
+
+###등분산성(2가지)
+#시각적
+spreadLevelPlot(model1)
+###등분산인지 아닌지 말하기 어려움
+
+#수치적
+ncvTest(model1)
+###p-value가 0.05보다 크기 때문에 H0채택. 분산이 동일하다.
+
+
+#"독립성을 만족하지 않았기 때문에 좋은 모형이 아님"
+
+
+summary(model1)
+#Multiple R-squared: 결정계수>전체 분산에서 차량의 무게에 의해서 설명되는 연비의 분산은 75% 정도이다.
+#F-statistic: 91.38 on 1 and 30 DF(크게 해석 안해도 됨),  p-value: 1.294e-10(기울기랑 비슷하게 나옴)
+
+
+#6. 새로운 값 예측
+model1<-lm(mpg~wt, mtcars)
+Predict(model1, newdata=data.frame(wt=c(4,5,5,5)))
+Predict(model1, newdata=data.frame(wt=c(4,5)),
+        interval="prediction")#새로운 값 하나가 왔을 때 신뢰구간. so, 신뢰구간 더 길게 나옴
+Predict(model1, newdata=data.frame(wt=c(4,5)),
+        interval="confidence")#평균에 대한 예측값의 신뢰구간
+
+
+#7. 회귀분석 결과 시각화
+library(ggplot2)
+ggplot(data = mtcars, aes(x=wt, y=mpg))+
+  geom_point()+
+  geom_smooth(method = "lm")#독립성 만족하지 않는 문제가 있음
+
+ggplot(data = mtcars, aes(x=wt, y=mpg))+
+  geom_point()+
+  geom_smooth(method = "lm", se=F)#신뢰구간 없는버전
+
+## mpg=4993-13.38wt+1.17wt^2    2차 회귀식 추정
+model2<-lm(mpg~wt+I(wt^2), mtcars)
+summary(model2)
+##이제는 독립성 만족
+plot(model1$fitted.values, model2$residuals)
+durbinWatsonTest(model2)
+
+###좋은 모형인지 아닌지 확인하는 것.
