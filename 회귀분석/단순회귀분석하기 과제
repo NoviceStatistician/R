@@ -1,0 +1,67 @@
+s02<-read.csv("C:/Users/OWNER/Downloads/slr02.csv")
+#1
+plot(Y~X, s02, pch=16)
+#2
+cor.test(s02$X, s02$Y)
+#3
+model02<-lm(Y~X, s02)
+summary(model02)
+#선형식: 25.2323 + 3.2911X + residual
+#4
+#X:
+#5
+#정규성:정규분포를 따른다.
+qqnorm(model02$residuals)
+qqline(model02$residuals)
+shapiro.test(model02$residuals)
+#독립성:독립성을 만족한다.
+library(car)
+plot(model02$fitted.values, model02$residuals)
+durbinWatsonTest(model02)
+#등분산성:등분산성을 만족한다.
+spreadLevelPlot(model02)
+ncvTest(model02)
+
+
+s07<-read.csv("C:/Users/OWNER/Downloads/slr07.csv")
+#1
+plot(Y~X, s07, pch=16)
+#2
+cor.test(s07$X, s07$Y)
+#3
+model07<-lm(Y~X, s07)
+summary(model07)
+#선형식: 46.4508 + 0.2876X + residual
+#4
+#
+#5
+#정규성:정규분포를 따른다.
+qqnorm(model07$residuals)
+qqline(model07$residuals)
+shapiro.test(model07$residuals)
+#독립성:독립성을 만족한다.
+plot(model07$fitted.values, model07$residuals)
+durbinWatsonTest(model07)
+#등분산성:등분산성을 만족한다.
+spreadLevelPlot(model07)
+ncvTest(model07)
+
+s12<-read.csv("C:/Users/OWNER/Downloads/slr12.csv")
+plot(Y~X, s12, pch=16)
+cor.test(s12$X, s12$Y)
+model12<-lm(Y~X, s12)
+summary(model12)
+#선형식: 867.6042 + 0.3732X + residual
+#4
+#
+#5
+#정규성:정규분포를 따르지 않는다.
+qqnorm(model12$residuals)
+qqline(model12$residuals)
+shapiro.test(model12$residuals)
+#독립성:독립성을 만족한다.
+plot(model12$fitted.values, model12$residuals)
+durbinWatsonTest(model12)
+#등분산성:등분산성을 만족한다.
+spreadLevelPlot(model12)
+ncvTest(model12)
