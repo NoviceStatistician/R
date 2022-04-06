@@ -8,7 +8,9 @@ model02<-lm(Y~X, s02)
 summary(model02)
 #선형식: 25.2323 + 3.2911X + residual
 #4
-#X:
+#
+X:화씨
+Y:줄무늬 그라운드 크리켓의 울음소리/초
 #5
 #정규성:정규분포를 따른다.
 qqnorm(model02$residuals)
@@ -33,7 +35,8 @@ model07<-lm(Y~X, s07)
 summary(model07)
 #선형식: 46.4508 + 0.2876X + residual
 #4
-#
+#X:수컷 회색 캥거루 코 길이
+Y:수컷 회색 캥거루 폭
 #5
 #정규성:정규분포를 따른다.
 qqnorm(model07$residuals)
@@ -53,7 +56,8 @@ model12<-lm(Y~X, s12)
 summary(model12)
 #선형식: 867.6042 + 0.3732X + residual
 #4
-#
+#x:최초 입주 예정년수
+y:예상 사용 종료 연도
 #5
 #정규성:정규분포를 따르지 않는다.
 qqnorm(model12$residuals)
