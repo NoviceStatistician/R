@@ -1,0 +1,47 @@
+#데이터 불러오기 및 정제
+if(!require('readxl'))install.packages('readxl');library('readxl')
+if(!require('dplyr'))install.packages('dplyr');library('dplyr')
+
+#지도 작성
+if(!require('leaflet.extras'))install.packages('leaflet.extras');library('leaflet.extras')
+if(!require('leaflet'))install.packages('leaflet');library('leaflet')
+if(!require('classInt'))install.packages('classInt');library('classInt')
+if(!require('maps'))install.packages('maps');library('maps')
+if(!require('rgdal'))install.packages('rgdal');library('rgdal')
+if(!require('xml2'))install.packages('xml2');library('xml2')
+if(!require('XML'))install.packages('XML');library('XML')
+if(!require('maptools'))install.packages('maptools');library('maptools')
+
+
+data = read_excel('C:/Users/OWNER/Desktop/DU진로체험/미세먼지.xlsx')
+
+data2 = data.frame(t(data))
+data2 = data2[-1,]
+colnames(data2) = c('시간평균', '일평균', '최고값', '최저값')
+
+df = data.frame(area = rownames(data2), HourMean=data2[,1], stringsAsFactors = F)
+df$area = as.character(df$area); df$HourMean = as.numeric(df$HourMean)
+df
+
+map = readOGR('C:/Users/OWNER/Desktop/DU진로체험/CTPRVN_202101/TL_SCCO_CTPRVN.shp', stringsAsFactors = F, verbose = F)
+
+map@data
+
+map@data$CTP_KOR_NM <- c('강원', '경기', '경남', '경북', '광주', '대구', '대전', '부산', '서울', '세종', '울산', '인천', '전남', '전북', '제주', '충남', '충북')
+map = spTransform(map, "+init=epsg:4326")
+map = spTransform(map, CRS("+proj=longlat +ellps=GRS80"))
+
+map@data = merge(map@data, df, by.x='CTP_KOR_NM', by.y='area', all=T)
+map@data = map@data[order(map@data$CTPRVN_CD),]
+map@data
+
+map2 = leaflet() %>% 
+  addTiles() %>% 
+  addDrawToolbar(editOptions=editToolbarOptions(selectedPathOptions=selectedPathOptions()))
+map2
+
+p <- colorBin("YlOrRd", domain = map@data$HourMean, bins = 7)
+
+map3 = map2 %>% addPolygons(data = map,color = ~ p(HourMean), stroke=F, smoothFactor = 0.1,fillOpacity = .5) %>%
+  addLegend(data = map, pal=p, values = ~ HourMean, position = 'bottomright', title = date())
+map3
