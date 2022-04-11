@@ -63,6 +63,11 @@ predict로 그리면 예측값이 선으로 들어감
   화재 건수로 도둑 건 수를 예측하는 모형 만들기
 
 a<-read.table("clipboard", header = T)
+    ##결측치 제거 모형 2가지
+    1.
+    data<-a[complete.cases(a),]
+    2.
+    data<-na.omit(a)
 
 plot(a, pch=16)
 aa<-a[a$Y<140,]
@@ -96,6 +101,7 @@ points(aa$X, aa$Y)
 
 cor.test(s12$X, s12$Y)
 model12<-lm(Y~X, s12)
+  #out2<-lm(Y~X+I(X^2), aa)가 좀 더 적절한 모형인 것 같음(2차 )
 summary(model12)
 #선형식: 867.6042 + 0.3732X + residual
 #4
