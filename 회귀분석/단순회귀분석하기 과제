@@ -51,6 +51,49 @@ ncvTest(model07)
 
 s12<-read.csv("C:/Users/OWNER/Downloads/slr12.csv")
 plot(Y~X, s12, pch=16)
+#1.data의 이상치를 제거해야 좋은 모형을 만듦
+그리고 기울기가 2개라 그거 두 개 써야 함
+2. 3차 모형 식을 집어넣자
+1차에 넣을 때보다 훨씬 결과 좋음
+3.모형에 대한 그림 넣을 때는
+predict로 그리면 예측값이 선으로 들어감
+
+  ex)
+  slr05
+  화재 건수로 도둑 건 수를 예측하는 모형 만들기
+
+a<-read.table("clipboard", header = T)
+
+plot(a, pch=16)
+aa<-a[a$Y<140,]
+plot(aa)
+cor(aa$X, aa$Y)
+
+#1-1
+out<-lm(Y~X, aa)
+summary(out)
+
+abline(out, col="blue")
+
+#1-2
+out<-lm(Y~X+I(X^2)+I(X^3), aa)
+summary(out)
+
+x<-seq(0,40,0.5)
+y<-predict(out, data.frame(X=x))
+plot(Y~X, aa)
+lines(x,y, col="red")
+
+
+#2.
+library(segmented)
+out1<-lm(Y~X, aa)
+out2<-segmented(out1)
+out2
+plot(out2, ylim=c(0,60))
+points(aa$X, aa$Y)
+
+
 cor.test(s12$X, s12$Y)
 model12<-lm(Y~X, s12)
 summary(model12)
