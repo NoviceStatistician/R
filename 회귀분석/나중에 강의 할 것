@@ -1,0 +1,6 @@
+plot(sin, -pi,pi)
+x<-seq(1,50,0.1)
+y<-x+sin(x)
+plot(x, y, type = "l")
+lines(x,x,col="blue")
+#1차에 sin이나 cos이 들어갈 수 있음.
