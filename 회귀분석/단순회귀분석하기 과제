@@ -118,3 +118,4 @@ durbinWatsonTest(model12)
 #등분산성:등분산성을 만족한다.
 spreadLevelPlot(model12)
 ncvTest(model12)
+
