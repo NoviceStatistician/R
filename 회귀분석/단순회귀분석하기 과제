@@ -10,7 +10,7 @@ summary(model02)
 #4
 #
 X:화씨
-Y:줄무늬 그라운드 크리켓의 울음소리/초
+Y:줄무늬  울음소리/초
 #5
 #정규성:정규분포를 따른다.
 qqnorm(model02$residuals)
