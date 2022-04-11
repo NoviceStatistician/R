@@ -101,7 +101,7 @@ points(aa$X, aa$Y)
 
 cor.test(s12$X, s12$Y)
 model12<-lm(Y~X, s12)
-  #out2<-lm(Y~X+I(X^2), aa)가 좀 더 적절한 모형인 것 같음(2차 )
+  #out2<-lm(Y~X+I(X^2), aa)가 좀 더 적절한 모형인 것 같음(2차/ 다항으로 갈 수록 독립성은 만족하지만 정규랑 등분산은 확인해봐야함)
 summary(model12)
 #선형식: 867.6042 + 0.3732X + residual
 #4
