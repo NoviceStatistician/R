@@ -1,0 +1,55 @@
+#다중공선성: 회귀분석에서 독립변수 사이에 강한 상관관계가 나타나는 문제를 말한다.
+
+# 다중공선성의 유무는 VIF값으로 확인 가능함
+
+# Ozone농도의 회귀식
+head(airquality)
+model1<- lm(Ozone~Solar.R+Wind+Temp+Month, airquality)
+summary(model1)
+## month는 중요한 요인이 아님. 나머지는 맞음
+
+vif(model1)# model1 의 VIF
+
+vif.1<-lm(Solar.R~Wind+Temp, airquality)
+vif.2<-lm(Wind~Solar.R+Temp, airquality)
+vif.3<-lm(Temp~Wind+Solar.R, airquality)
+vif.1;vif.2;vif.3
+
+
+crPlots(model1) # 각 독립변수들의 분포에 대해 시각적으로 볼 수 있음.
+
+model2<- lm(Ozone~Solar.R+(Wind^2)+Temp+Month, airquality)
+## crPlots를 통해 wind가 2차 선형식인 것 처럼 보여서 바꿔주면
+   모형의 R-squared값이 0.08정도 올라간 것을 알 수 있음.
+   vif(model2)를 해보면 다중공선성이 올라간 문제를 확인할 수 있음.
+   제어할 수 있지만 나중에 다시 설명함.
+
+
+
+#다중공선성 문제 해결법
+1. 변수 제거법
+  a, b, c, d 에서 cor(a,b)=0.9라면 a,b 중 중요한거 1개만 사용
+  덜 중요한 것을 빼기
+  a,c,d / b,c,d 중 R^2(R-squared)값이 큰 걸 선택
+  
+  가장자주 사용, 가장 쉬움
+  
+2. 주성분회귀분석
+  기존의 행렬을 토대로 가장 중요한 주성분을 추출
+  그렇게 되면 다중공선성이 없어짐.
+  주성분은 독립임
+  
+  자주 사용은 안함. 사회과학에서는 다루지만 다른 곳에서는 거의 사용하지 않음.
+  
+3. 능형회귀모형(ridge regression)
+  대각행렬의 임의의 람다 값을 삽입함.
+  람다 값이 커지면 커질 수록 분산이 작아짐
+  적당한 람다 값을 넣으면 분산이 안정화 되면서도 좋은 회귀 값을 추출할 수 있음.
+
+  lasso와 비슷하지만 절대값, 제곱값 으로 접근하는 것이 다름
+  beta에 대한 분산의 차이가 min이 되도록 임의의 값 lamda를 넣어주자. 
+  절대값으로 접근
+
+4. lasso
+  
+  제곱값으로 접근
