@@ -1,0 +1,84 @@
+data<-read.csv("C:/Users/btg13/Desktop/R/data/manhattan.csv")
+View(data)
+
+library(car)
+names(data)
+dim(data)
+
+#rental_id 사용안함함, borough는 다 멘하탄
+model0<-lm(rent~., data=data[,2:17])
+#범주형 자료도 회귀분석 할 수 있음. 값이 있으면 1, 없으면 0
+summary(model0)
+
+#1. 다중공선성 확인
+vif(model0)
+#값이 1이나 2정도로 작기 때문에 독립변수들 간 상관성은 존재하지 않는다.
+
+#2. 모형선택/변수선택
+#전체의 서브셋에서 찾아보는게 제일 좋다.
+
+install.packages("mlbench")
+library(mlbench)
+.libPaths("C:/Program Files/R/R-4.2.0/library")
+if(!require(leaps)) install.packages("leaps"); library(leaps)
+
+
+m1<-regsubsets(rent ~., data=data[,2:17])
+summary(m1)
+summary(m1)$adjr2 #수정된 결정계수
+summary(m1)$bic #nlog(RSS/n) +plog(n)(p:변수 개수, n:데이터 개수)
+summary(m1)$which[8,] #제일 높은 값 출력
+
+model1<-lm(rent~bathrooms+ size_sqft+floor+building_age_yrs +
+             neighborhood, data=data)
+summary(model1)#Coefficients랑 t value 값을 보고 양 음 방향 확인
+summary(model0)
+#0.001밖에 차이가 안남.
+
+influencePlot(model1)#의심점 확인, NaN은 0을 0으로 나눌때 출력됨
+#hat은 지렛대점. 모형에 들어가도 상관없음. 근처의 데이터가 많지 않을 때는 빼는게 좋음
+#CookD는 다 빼는게 좋다. 영향점으로 의심되는 점
+
+data2<-data[-c(5,185,1497,1960,2469,2737),]
+dim(data);dim(data1)
+
+model2<-lm(rent~bathrooms+ size_sqft+floor+building_age_yrs +
+             neighborhood, data=data2)
+summary(model1) #0.8169
+summary(model2) #0.8233
+
+influencePlot(model2)#2,3번 반복하는게 좋음
+#453지렛대점/638 이상점/638, 2269, 2671 영향점
+#주의할 점: 나온 숫자들과 뺀 숫자들과 항상 일치하지는 않음.
+#           숫자를 이미 빼고 한 번 더 빼는 것이기 때문에 앞에서 뺀 개수를 
+#           더해서 빼야함.
+
+data3<-data[-c(5,185,1497,1960,2469,2737, 453, 638, 2269, 2671),]
+#처음 데이터에서 이어붙여서 빼주기
+
+model3<-lm(rent~bathrooms+ size_sqft+floor+building_age_yrs +
+             neighborhood, data=data3)
+summary(model3) #0.8245
+
+influencePlot(model3)#여러번 하면 모형의 분산정도가 줄어들기 때문에, 2~3회 정도만 하기
+
+#모형진단: 좋은 애들만 뽑아서 사용하자.
+
+#정규성
+shapiro.test(model3$residuals)
+boxCox(model3)
+#정규성 만족 안함.
+model4<-lm(rent^-0.002~bathrooms+ size_sqft+floor+building_age_yrs +
+             neighborhood, data=data3)
+shapiro.test(model4$residuals)
+
+#독립성
+durbinWatsonTest(model3$residuals)
+
+#등분산성
+ncvTest(model3)
+spreadLevelPlot(model3)
+
+plot(data3$rent, model3$fitted.values)
+#로그식처럼 되어있음. 데이터를 로그변환 시키는게 결과가 더 좋을 것 같음
+
