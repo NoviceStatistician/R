@@ -1,0 +1,49 @@
+pop2 <-as.vector(t(population))/10000
+x <- 1960:1995
+plot(x, pop2, type = "l")
+
+df=data.frame(x, pop2)
+#1차 선형모형
+model1<-lm(pop2~x, data=df)
+summary(model1)
+lines(x, model1$fitted.values, col="red", lwd=2)
+
+#2차 선형모형
+model2<-lm(pop2~x+I(x^2), data=df)
+lines(x, model2$fitted.values, col="blue", lwd=2, lty=2)
+
+predict(model2, data.frame(x=2000)) #2000년의 인구수 예측
+predict(model2, data.frame(x=2000), interval="confidence") #2000년의 인구수 범위 예측
+
+
+library(forecast)
+y<-ts(pop2, start=1960) #time serise, 1960year start, 시계열자료로 변환
+plot(y)
+library(ggplot2)
+autoplot(y)+geom_smooth(method = "lm")
+
+#중요중요
+out2<- tslm(y~trend) #trend+seasonal하면 각 월에 관한 것 알아서 인식
+
+out6<-tslm(log(y)~trend+I(trend^2)) #등분산성 만족 안할 때 log변환 시킨다.
+summary(out6) #1960년을 1로 간주해서 분석한 결과임
+
+#예측
+out2<-tslm(y~1) #이상함
+out2<-tslm(y~trend) #좀 잘 안됨(1차)
+fcast<-forecast(out2, h=10)
+autoplot(fcast) +
+  ggtitle("회귀를 이용한 예측값") +  xlab("연도") 
+
+out3<-tslm(y~trend+I(trend^2))
+fcast<-forecast(out3, h=20)#잘 적합함(2차)
+
+
+#예측
+fcast<-forecast(out6, h=5)
+
+autoplot(fcast) +
+  ggtitle("회귀를 이용한 예측값") +  xlab("연도") 
+
+
+>>>추세분석의 퍼포먼스가 안좋음. 그냥 이렇구나. 개념파악을 하는 것으로 이용. time을 하나의 변수로 인
