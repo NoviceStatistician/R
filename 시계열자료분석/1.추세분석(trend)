@@ -25,18 +25,16 @@ autoplot(y)+geom_smooth(method = "lm")
 #중요중요
 out2<- tslm(y~trend) #trend+seasonal하면 각 월에 관한 것 알아서 인식
 
-out6<-tslm(log(y)~trend+I(trend^2)) #등분산성 만족 안할 때 log변환 시킨다.
+out6<-tslm(log(y)~trend+I(trend^2))
 summary(out6) #1960년을 1로 간주해서 분석한 결과임
 
 #예측
-out2<-tslm(y~1) #이상함
-out2<-tslm(y~trend) #좀 잘 안됨(1차)
+out2<-tslm(y~1)
+out2<-tslm(y~trend)
+out2<-tslm(y~trend+I(trend^2))
 fcast<-forecast(out2, h=10)
 autoplot(fcast) +
   ggtitle("회귀를 이용한 예측값") +  xlab("연도") 
-
-out3<-tslm(y~trend+I(trend^2))
-fcast<-forecast(out3, h=20)#잘 적합함(2차)
 
 
 #예측
@@ -46,4 +44,60 @@ autoplot(fcast) +
   ggtitle("회귀를 이용한 예측값") +  xlab("연도") 
 
 
->>>추세분석의 퍼포먼스가 안좋음. 그냥 이렇구나. 개념파악을 하는 것으로 이용. time을 하나의 변수로 인
+
+#계절성분만을 갖는 경우
+a1=-0.8
+a2=1.4
+
+i<-1:100
+first = a1*sin(pi*i/6 + pi/8)
+second = a2*sin(pi*i/3+pi*3/4)
+z=first+second
+
+plot(1:100, z, type="o", lwd=2)
+lines(1:100, first, col="blue", lty=2) #굳이 안해도 됨
+lines(1:100, second, col="red", lty=2) #굳이 안해도 됨
+
+library(forecast)
+z2 <- ts(z, frequency = 12) #계절성분이 12인 seasonal time series data로 변환(월 단위 데이터 인식)
+
+fit1<-tslm(z2~season) #1월 기준 다른 월 별 차이 표시(2월이 가장 판매가 낮고, 11월이 가장 판매가 높음)
+fore1<-forecast(fit1, h=12) #파란선=예측
+autoplot(fore1)
+
+summary(fit1)
+
+
+#추세계절성분
+fit2<-tslm(z2~season+trend)
+fore2<-forecast(fit2, h=12) #파란선=예측
+autoplot(fore2)
+
+
+#lm으로만 하는 법
+x<-rep(1:12,100)[1:00]
+df<-data.frame(x,z)
+head(df)
+out1<-lm(z~factor(x), data=df)
+summary(out1)
+
+year<-rep(2006:20018, each=12)[1:100]
+df<-data.frame(x,z,year)
+out2<-lm(z~factor(x)+year, data=df)
+summary(out2)
+
+
+# Harmonic seasonal model
+time<-1:100
+SIN<-COS<-matrix(nr=length(time), nc=6) #sin cos 로 변환시키면 더 적은 값으로 예측이 가능함
+
+for (i in 1:6) {
+  COS[,i] <- cos(2*pi*i*time/12)
+  SIN[,i] <- sin(2*pi*i*time/12)
+}
+
+fit2 <- lm(z~COS[,1]+SIN[,1]+COS[,2]+SIN[,2]+COS[,3]+SIN[,3]) 
+summary(fit2) #하모니 접근
+
+plot(1:100, z, type="o", lwd=2)
+lines(1:100, fit2$fitted.values, col="red")
