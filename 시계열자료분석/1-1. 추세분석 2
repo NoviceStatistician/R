@@ -1,0 +1,158 @@
+library(fpp3)
+head(us_change)
+
+us_change %>% 
+  pivot_longer(  #그림그리기 편하라고 wider자료를 longer로 변환
+    cols = c("Consumption", "Income"),
+    names_to = "Series",
+    values_to = "value"
+  ) -> us_change2
+us_change2
+
+us_change2 %>% 
+  autoplot(value) + labs(y="% change")
+
+
+#소득과 지출간의 선형관계
+us_change %>% 
+  ggplot(aes(x = Income, y = Consumption)) +
+  geom_point(size = 1.2) +
+  geom_smooth(formula = y ~ x, method = "lm", se = FALSE) +  #method = "lm"은 linear regerssion을 의미
+  labs(
+    x = "Income (quarterly % change)",
+    y = "Consumption (quaterly % change)"
+  )
+
+us_change %>% 
+  model(TSLM(Consumption ~ Income)) %>%  #forcast구문이랑 약간 다른 문법
+  report() #결과물 출력 / Consumption= 0.54454 + 0.27183 × Income  선형식이 도출
+
+
+#Multiple linear model
+us_change %>% 
+  pivot_longer(
+    cols = c("Production", "Savings", "Unemployment"),
+    names_to = "Series",
+    values_to = "value") -> us_change2
+
+us_change2
+
+us_change2 %>%  autoplot(value, show.legend = FALSE) +
+  labs(y = "% change") +
+  facet_wrap(. ~ Series, scales = "free_y", nrow = 3)
+
+##각 변수들간의 상관관계를 확인
+library(GGally)
+
+us_change %>% 
+  ggpairs(columns = 2:6)
+
+
+#Least Squares Estimation
+fit_consMR <- us_change %>% 
+  model(tslm = TSLM(formula = Consumption ~ Income + Production + Unemployment + Savings)) #단점: 미래를 예측하는 것이 안됨
+fit_consMR %>% 
+  report()
+###TSLM이 time serise 모형과 lenir모형 둘 다 세울 수 있음. 하지만 시계열 모형으로써의 가치는 떨어짐. 미래 시간 고려를 못하기 때문.
+
+
+#Fitted values
+fit_consMR %>% 
+  augment() #augment() 함수를 사용하여 적합된 값을 출력
+
+fit_consMR %>% 
+  augment() %>% 
+  ggplot(aes(x = Quarter)) +
+  geom_line(aes(y = Consumption, colour = "Data")) +
+  geom_line(aes(y = .fitted, colour = "Fitted")) +
+  labs(y = NULL, title = "Percent change in US consumption expenditure") +
+  scale_colour_manual(values = c(Data = "black", Fitted = "#D55E00")) +
+  guides(colour = guide_legend(title = NULL))
+
+
+#ACF plot of residuals & Histogram of residuals (자기상관성, 독립성)
+fit_consMR %>% 
+  gg_tsresiduals() #gg_tsresiduals() 함수를 통해 잔차항에 대한 진단가능
+
+
+#Residual plots against predictors
+fit_consMR %>% 
+  residuals()
+
+us_change %>% 
+  left_join(residuals(fit_consMR), by = "Quarter") %>% 
+  pivot_longer(
+    cols = Income:Unemployment,
+    names_to = "regressor",
+    values_to = "x"
+  ) %>% 
+  ggplot(aes(x = x, y = .resid)) +
+  geom_point(size = 1.2) +
+  facet_wrap(. ~ regressor, scales = "free_x") +
+  labs(x = NULL, y = "Residuals")
+
+
+#Residual plots against fitted values
+fit_consMR %>% 
+  augment() %>% 
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(size = 1.2) +
+  labs(x = "Fitted", y = "Residuals")
+
+#Outliers and influential observations
+
+#Spurious regression
+temp_fit <- aus_airpassengers %>% 
+  filter(Year <= 2011) %>% 
+  left_join(guinea_rice, by = "Year") %>% 
+  model(TSLM(Passengers ~ Production))
+
+temp_fit %>% 
+  report()
+
+temp_fit %>% 
+  gg_tsresiduals()
+
+#Trend
+
+#Dummy variables
+
+
+#Seasonal dummy variables ★중요★
+recent_production <- aus_production %>% 
+  filter(year(Quarter) >= 1992)
+
+recent_production %>% 
+  autoplot(Beer) +
+  labs(y = "Megalitres", title = "Australian quarterly beer production")
+
+##trend() 함수와 season() 함수는 디폴트로 들어가는 표준함수X. 필요 시 TSLM() 함수 안에서 적용
+fit_beer <- recent_production %>% 
+  model(TSLM(formula = Beer ~ trend() + season()))
+
+fit_beer %>% 
+  report()  #호주는 한국과 계절이 반대. 1분기=여름에 맥주 많이먹음. 4분기=연말 축제. 2분기에 공장 쉬어.
+
+"""적합된 결과를 확인해보면 분기당 평균 -0.34 감소 추세가 있음.
+평균적으로 2분기는 1분기보다 -34.7, 3분기는 1분기보다 -17.8, 반면 4분기는 1분기보다 72.8 정도 생산량이 많음."""
+
+fit_beer %>% 
+  augment() %>% 
+  ggplot(aes(x = Quarter)) +
+  geom_line(aes(y = Beer, colour = "Data")) +
+  geom_line(aes(y = .fitted, colour = "Fitted")) +
+  scale_colour_manual(values = c(Data = "black", Fitted = "#D55E00")) +
+  labs(y = "Megalitres", title = "Australian quarterly beer production") +
+  guides(colour = guide_legend(title = "Series"))
+
+##아래 그래프와 같이 분기별 실제 맥주 생산량과 예상치를 표현
+fit_beer %>% 
+  augment() %>% 
+  ggplot(aes(x = Beer, y = .fitted, colour = factor(quarter(Quarter)))) +
+  geom_point(size = 1.2) +
+  labs(x = "Actual values", y = "Fitted", title = "Australian quarterly beer production") +
+  geom_abline(intercept = 0, slope = 1) +
+  guides(colour = guide_legend(title = "Quarter"))
+
+
+
