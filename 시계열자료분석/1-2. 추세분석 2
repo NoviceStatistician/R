@@ -149,10 +149,137 @@ fit_beer %>%
 fit_beer %>% 
   augment() %>% 
   ggplot(aes(x = Beer, y = .fitted, colour = factor(quarter(Quarter)))) +
-  geom_point(size = 1.2) +
+  geom_point(size = 1.6) +
   labs(x = "Actual values", y = "Fitted", title = "Australian quarterly beer production") +
   geom_abline(intercept = 0, slope = 1) +
   guides(colour = guide_legend(title = "Quarter"))
 
+#Intervention variables
 
 
+#Fourier series
+recent_production %>% 
+  model(TSLM(formula = Beer ~ trend() + fourier(K = 2))) %>% #K arguments는 몇개의 sin, cos 항을 포함시킬지 결정하는 부분/m이 계절 주기라고 할 때 허용되는 K의 최대값은 K=m/2
+  report() #긴 계절 기간 동안 계절 더미 변수를 사용할 때 대안 중 하나는 푸리에(Fourier) 항을 사용하는 것/fourier를 넣으면 하모니 모형이 됨
+
+#비교
+recent_production %>% 
+  model(TSLM(formula = Beer ~ trend() + fourier(K = 2)))->model1
+recent_production %>% 
+  model(TSLM(formula = Beer ~ trend() + season()))->model2
+
+forecast(model1)
+forecast(model2)
+        
+
+#Selecting predictors
+fit_consMR %>% 
+  glance() %>% 
+  select(adj_r_squared, CV, AIC, AICc, BIC)
+
+model1 %>% 
+  glance() %>% 
+  select(adj_r_squared, CV, AIC, AICc, BIC)
+
+model2%>% 
+  glance() %>% 
+  select(adj_r_squared, CV, AIC, AICc, BIC)
+
+"""adj_r_squared는 높으면 높을 수록 좋고, 나머지는 낮으면 낮을 수록 좋음. 이걸 볼 때 원래는 fourier가 더 좋치만 현재는 큰 차이가 없음."""
+
+#Adjusted R-squared
+
+#Cross-validation
+
+#Akaike’s Information Criterion
+
+#Corrected Akaike’s Information Criterion
+
+#Schwarz’s Bayesian Information Criterion
+
+#Which measure should we use?
+
+
+#Forecasting with regression
+fit_beer %>% 
+  report()
+
+fc_beer <- fit_beer %>% 
+  forecast()
+fc_beer
+
+fc_beer %>% 
+  autoplot(recent_production) +
+  labs(y = "megalitres", title = "Forecasts of beer production using regression")
+
+us_change
+
+"""여기서 시나리오는 아래와 같이 셋팅
+고용률(Unemployment 관련)의 변화 없이 소득(Income)과 저축(Savings)이 각각 1%와 0.5%로 증가하거나 감소
+예측을 위한 시나리오 셋팅은 scenarios() 함수를 통해 구성해볼 수 있습니다."""
+## 회귀모형 적합
+fit_consBest <- us_change %>% 
+  model(lm = TSLM(formula = Consumption ~ Income + Savings + Unemployment))
+
+## 시나리오 구성
+future_scenarios <- scenarios(
+  Increase = new_data(us_change, 4) %>% 
+    mutate(
+      Income = 1,
+      Savings = 0.5,
+      Unemployment = 0
+    ),
+  Decrease = new_data(us_change, 4) %>%  #tsibble 라이브러리 내 new_data() 함수는 key-index 조합으로 원하는 시점만큼의 미래 값을 생성해주는 함수
+    mutate(
+      Income = -1,
+      Savings = -0.5,
+      Unemployment = 0
+    ),
+  names_to = "Scenario"
+)
+
+future_scenarios
+
+fc <- fit_consBest %>% 
+  forecast(new_data = future_scenarios) #시나리오 구성을 forecast() 함수 내 new_data argument에 적용
+
+fc
+
+us_change %>% 
+  autoplot(Consumption) +
+  autolayer(fc) +
+  labs(title = "US consumption", y = "% change") #autolayer() 함수에 시나리오 예측 적용 객체를 씌워주어 시각화
+
+
+#Nonlinear regression
+boston_men <- boston_marathon %>% 
+  filter(Year >= 1924 & Event == "Men's open division") %>% 
+  mutate(Minutes = as.numeric(Time)/60)
+
+boston_men
+
+boston_men %>% 
+  autoplot(Minutes) +
+  geom_smooth(formula = y ~ x, se = FALSE, method = "lm") +
+  labs(x = "Year", y = "Minutes")
+
+boston_men %>% 
+  model(TSLM(formula = Minutes ~ trend())) %>% 
+  gg_tsresiduals()
+"시간이 지남에 따라 감소하는 듯한 선형 추이를 보이지만, 선형추세로 나온 잔차를 보면 비선형 패턴"
+
+fit_trends <- boston_men %>% #아래 코드와 같이 자연로그 또는 piecewise reg. 등을 적합시켜 비교
+  model(
+    linear = TSLM(formula = Minutes ~ trend()),
+    exponential = TSLM(formula = log(Minutes) ~ trend()),
+    piecewise = TSLM(formula = Minutes ~ trend(knots = c(1950, 1980)))
+  )
+
+fc_trends <- fit_trends %>% 
+  forecast(h = 10)
+
+boston_men %>% 
+  autoplot(Minutes) +
+  geom_line(data = fit_trends %>% fitted(), aes(y = .fitted, colour = .model)) +
+  autolayer(fc_trends, alpha = 0.5, level = 95) +
+  labs(y = "Minutes", title = "Boston marathon winning times")
