@@ -1,0 +1,43 @@
+tslm 대신 ets로 바꾸면 됨
+stlf로 해도 됨. 
+data를 ts로 바꾸고 함수만 변경해주면 바뀜.
+
+
+------------------------------------------------------------------------------------------------------------------
+#지수평활법
+감소폭이 지수적으로 줄어들기 때문에 지수평활법이라고 한다.
+
+##단순지수평활법
+library(fpp2)
+oildata <- window(oil, start=1996)
+autoplot(oildata) +
+  ylab("원유 (백만 톤)") + xlab("연도")
+
+oildata %>% meanf(h=5) %>% autoplot() #산술평균으로 그냥 예측
+
+oildata %>% ses(h=5) %>% autoplot() #ses는 계속 평균을 구함(like 가중평균)/지수평활법 사용/추세가 반영 안되어있음
+
+
+##Prablem1. 그렇다면 최적 alph(가중)는 어떻게 구함?
+fc <- ses(oildata, h=5) 
+fc$model #여기에서 알아서 alph값 구해줌
+
+##Prablem2. 첫번째 시점의 값은 t0가 있어야 하는데, t1은 관측값은 있고 예측값은 없음.
+fc$model #Initial states(평활모수)도 알아서 추정해줌(전체자료 평균=추세성 있으면 안맞음/t1을 t0에 그대로 넣어줌/역으로 t1로 t0를 예측)
+
+##Prablem3. 추세성이 있는데 고려가 안됨. 그럴때는?
+#추세기법 사용(선형추세성이 고려된)(추세기법은 중간고사 안나옴.)
+#ses 대신 holt 사용.
+oildata %>% holt(h=5) %>% autoplot() #add 기울기
+fc <- holt(oildata, h=5) 
+fc$model #기울기 is beta, 가중치 is alph>>2 Initial states
+
+###감쇠추세기법
+#현재는 증가한다고 했는데, 미래도 계속 증가할까?
+#우리는 물리적 상한이 존재한다. ex)토익점수, 온도, 인구수, 성적
+#holt는 계속 증가하는 모형이다.
+fc <- holt(air, h=15)
+fc2 <- holt(air, damped=TRUE, phi = 0.9, h=15) #add opction damped
+#감쇠가 더 잘 적합함
+
+
