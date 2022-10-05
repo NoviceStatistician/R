@@ -1,1 +1,50 @@
-5
+library(porecast)
+library(fpp2)
+aust <- window(austourists,start=2005)
+autoplot(aust) #계절성 있네
+
+fit1 <- hw(aust,seasonal="additive") #가법모형 >>과거부터 지금까지 변동이 일정하다.(과거부터 미래까지 변동은 비슷하거나 같다를 가정) snope=0, sesson=0가정
+fit1$model #Smoothing parameters = 평활모수
+           #alpha=평균의 최근치에 가중치
+           #beta=기울기에 대한 가중치
+           #gamma=계절성에 대한 가중치. s가 분기별로 총 4개임
+plot(fit1$model) #obs=lebel+slope+season
+                 #slope=기울기, 변화는 있지만 그렇게 크지 않음
+                 #season=계절성. 과거부터 현대까지의 폭은 어때. 최근으로 갈 수록 올라감.
+"가법 모형으로 세우기가 별로네. 현대로 갈 수록 값이 커져"
+
+fit2 <- hw(aust,seasonal="multiplicative") #승법모형(1을 기준으로 값이 변함. 1보다 크면 값이 크고, 작으면 반대)
+fit2$model #gamma가 승법보다 작다>평활이 잘 안됨.>>과거부터 지금까지 변동이 일정하지 않고 점점 변할 때 사용. snope=1, sesson=1가정
+plot(fit2$model) #obs=level*slope*season
+
+autoplot(aust) +
+  autolayer(fit1, series="HW 덧셈 예측", PI=FALSE) + #fit1 안에 damped=T를 넣어서 감쇠추세 확인 가능함
+  autolayer(fit2, series="HW 곱셈 예측", PI=FALSE) +
+  xlab("연도") +
+  ylab("호주 국제선 여행객 숙박일 (단위: 백만)") +
+  guides(colour=guide_legend(title="예측"))
+
+
+
+
+beer
+
+autoplot(beer)
+
+fit0<-tslm(beer~trend+season) #추세모형
+summary(fit0)
+forecast(fit0, h=12) %>% autoplot()
+
+fit1<-tslm(beer~trend+fourier(beer, K=6))
+summary(fit1)
+forecast(fit1, h=12) #미래예측하는 데이터가 없어서 안돌아가는 것임
+
+Fit1<-hw(beer, h=12, seasonal = "additive")
+Fit2<-hw(beer, h=12, seasonal = "multiplicative")
+
+autoplot(beer)+
+  autolayer(forecast(fit0, h=12), series="trend model", PI=FALSE)+
+  autolayer(Fit1, series="HW plus", PI=FALSE)+
+  autolayer(Fit2, series="HW multi", PI=FALSE)
+#What is the best in three model?
+#세 모형으로 이미 나와있는 관측값을 예측해본다. 그 후 제일 적합한 것을 사용한다.>> model evaluation
