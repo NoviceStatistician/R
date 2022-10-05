@@ -43,3 +43,22 @@ fc2 <- holt(air, damped=TRUE, phi = 0.9, h=15) #add opction damped
 
 #지수평활법의 가장 큰 단점
 "항상 예측값이 실제값보다 늦게 나타남/한 타임 늦게 따라옴/뒷북.."
+
+
+
+
+-------------
+library(forecast)
+y<-ts(airquality$Ozone)
+autoplot(y)
+
+y %>% meanf() %>% autoplot #평균
+
+fit1<-y %>% ses() %>% autoplot #지수평활법 
+fit1$model #파라메터나 가중치 등을 볼 수 있음
+
+fit2<-y %>% holt() %>% autoplot #추세모형
+fit2$model #기울기, 가중치 등을 볼 수 있음
+
+fit3<-y %>% holt(damped=True) %>% autoplot #감쇠추세모형
+fit3$model #phi는 감쇠정도
