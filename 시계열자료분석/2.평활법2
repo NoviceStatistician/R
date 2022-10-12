@@ -1,0 +1,9 @@
+library(fpp2)
+aust<-window(austourists, start=2005)
+fit<-ets(aust) #model="ZAM">추세모형, damped=T>추세감쇠모형, model="Z">?그냥 모델이랑 비슷한
+outfit<-forecast(fit,h=12)
+autoplot(outfit)
+
+fit1<-hw(aust, h=12)
+autoplot(fit1, PI=FALSE, col="cyan")+
+  autolayer(outfit, PI=FALSE, col="red")
