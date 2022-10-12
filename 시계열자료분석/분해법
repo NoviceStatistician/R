@@ -1,0 +1,19 @@
+aust %>% autoplot
+decompose(aust) %>% plot
+decompose(aust) -> out1
+out1$seasonal #변화없음
+out1$trend #이동평균 MA를 3?로 잡아서 앞뒤로 NA가 2개씩 있음(계절성분을 없애는 것이 특징)
+"그러면"
+aust-out1$trend->temp1
+temp1[seq(1,44,by=4)] %>% mean(.,na.rm=T)
+temp1[seq(2,44,by=4)] %>% mean(.,na.rm=T)
+temp1[seq(3,44,by=4)] %>% mean(.,na.rm=T)
+temp1[seq(4,44,by=4)] %>% mean(.,na.rm=T)
+
+out1$seasonal[1:4] #약간의 차이는 나지만 거의 비슷함.
+"원자료에서 평균값을 뺌. 그 후 나머지"
+
+ma(aust,4)->out2
+out1$trend
+  
+aust-out2 #계절성분+오차성분
