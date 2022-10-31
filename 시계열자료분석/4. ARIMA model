@@ -1,0 +1,24 @@
+library(forecast)
+x<- 1:10; y<-sqrt(x)
+plot(y~x, type="o")
+
+lm(y~x)->model1 #추세모형
+summary(model1) #선형식 구함
+
+library(car)
+durbinWatsonTest(model1) #오차들간 자기 상관성 확인/ 유의수준 안넘음=독립아님
+plot(model1$fitted.values, model1$residuals) #패턴존재
+
+acf(model1$residuals) #어느시점에서 영향을 받는지, 상관성이 있는지 나타내줌
+pacf(model1$residuals)
+
+#정상성 있는 모형이라 바로 ar모형만들 수 없음
+
+diff(y)
+plot(diff(y), type="o") #정상성(추세, 계절 성분 없는) 만족한 ar모형
+
+
+
+
+ts(y) %>% auto.arima()
+     
